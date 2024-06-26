@@ -8,6 +8,6 @@ build_property.PlatformNeutralAssembly =
 build_property.EnforceExtendedAnalyzerRules = 
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = SmartLib
-build_property.ProjectDir = C:\Users\kyshc\Work\Programming\SmartLibC#\SmartLib\
+build_property.ProjectDir = C:\Users\kyshc\Work\Programming\SmartLibCS\SmartLib\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 

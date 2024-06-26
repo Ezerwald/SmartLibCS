@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\kyshc\\Work\\Programming\\SmartLibC#\\SmartLib\\SmartLib.csproj": {}
+    "C:\\Users\\kyshc\\Work\\Programming\\SmartLibCS\\SmartLib\\SmartLib.csproj": {}
   },
   "projects": {
-    "C:\\Users\\kyshc\\Work\\Programming\\SmartLibC#\\SmartLib\\SmartLib.csproj": {
+    "C:\\Users\\kyshc\\Work\\Programming\\SmartLibCS\\SmartLib\\SmartLib.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\kyshc\\Work\\Programming\\SmartLibC#\\SmartLib\\SmartLib.csproj",
+        "projectUniqueName": "C:\\Users\\kyshc\\Work\\Programming\\SmartLibCS\\SmartLib\\SmartLib.csproj",
         "projectName": "SmartLib",
-        "projectPath": "C:\\Users\\kyshc\\Work\\Programming\\SmartLibC#\\SmartLib\\SmartLib.csproj",
+        "projectPath": "C:\\Users\\kyshc\\Work\\Programming\\SmartLibCS\\SmartLib\\SmartLib.csproj",
         "packagesPath": "C:\\Users\\kyshc\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\kyshc\\Work\\Programming\\SmartLibC#\\SmartLib\\obj\\",
+        "outputPath": "C:\\Users\\kyshc\\Work\\Programming\\SmartLibCS\\SmartLib\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\kyshc\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -39,6 +39,20 @@
       "frameworks": {
         "net8.0-windows7.0": {
           "targetAlias": "net8.0-windows",
+          "dependencies": {
+            "MimeTypesMap": {
+              "target": "Package",
+              "version": "[1.0.8, )"
+            },
+            "PdfPig": {
+              "target": "Package",
+              "version": "[0.1.8, )"
+            },
+            "System.Data.SQLite": {
+              "target": "Package",
+              "version": "[1.0.118, )"
+            }
+          },
           "imports": [
             "net461",
             "net462",
