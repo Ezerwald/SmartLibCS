@@ -111,23 +111,15 @@ public class BookProcessor
         try
         {
             var bookInfo = await _bookInfoExtractor.GetBookInfoAsync(filepath);
-            _dbHandler.AddBook(bookInfo.Title, bookInfo.Author);
-            Console.WriteLine($"Processed digital book '{filepath}' - Title: '{bookInfo.Title}', Author: '{bookInfo.Author}'");
+            string bookTitle = bookInfo.Title;
+            string bookAuthor = bookInfo.Author;
+            _dbHandler.AddBook(bookTitle, bookAuthor);
+            Console.WriteLine($"Processed digital book '{filepath}' - Title: '{bookTitle}', Author: '{bookAuthor}'");
         }
         catch (Exception e)
         {
             Console.WriteLine($"Error processing digital book '{filepath}': {e.Message}");
         }
-    }
-
-    public static async Task Main(string[] args)
-    {
-        // Example usage:
-        var folderPath = "path/to/your/books/folder";
-        var dbPath = "path/to/your/database.db";
-
-        var processor = new BookProcessor(folderPath, dbPath);
-        await processor.ProcessBooksAsync();
     }
 }
 
