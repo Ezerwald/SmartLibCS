@@ -14,10 +14,14 @@ public class BookInfoExtractor
     public async Task<BookInfo> GetBookInfoAsync(string filepath)
     {
         string filename = Path.GetFileName(filepath);
+
+        // Try extracting from metadata first
         var metadataResult = await AttemptExtraction(MetadataExtractor.ExtractBookInfo, filepath, "Metadata");
+
         string title = metadataResult.Title;
         string author = metadataResult.Author;
 
+        // If not found or incomplete, try fetching from online databases
         if (string.IsNullOrEmpty(title) || string.IsNullOrEmpty(author))
         {
             string query = !string.IsNullOrEmpty(title) ? title : filename;
@@ -26,6 +30,7 @@ public class BookInfoExtractor
             author = onlineResult.Author;
         }
 
+        // If still not found or incomplete, try extracting from filename
         if (string.IsNullOrEmpty(title) || string.IsNullOrEmpty(author))
         {
             var filenameResult = FilenameExtractor.ExtractBookInfo(filename);
@@ -33,6 +38,7 @@ public class BookInfoExtractor
             author = filenameResult.Author;
         }
 
+        // Finalize book info ensuring no empty values are returned
         var finalizedResult = FinalizeBookInfo(title, author, filepath);
         title = finalizedResult.Title;
         author = finalizedResult.Author;
@@ -51,24 +57,32 @@ public class BookInfoExtractor
         }
         catch (Exception e)
         {
-            Console.WriteLine($"Error during '{methodName}' extraction: {e.Message}");
-            return new BookInfo();
+            Console.WriteLine($"Extraction method '{methodName}' failed: {e.Message}");
+            return new BookInfo { Title = null, Author = null };
         }
-    }
-
-    private void LogBookData(string title, string author)
-    {
-        Console.WriteLine($"Extracted Title: {title}, Author: {author}");
     }
 
     private BookInfo FinalizeBookInfo(string title, string author, string filepath)
     {
-        var finalizedResult = new BookInfo
+        if (string.IsNullOrEmpty(title))
         {
-            Title = string.IsNullOrEmpty(title) ? Path.GetFileNameWithoutExtension(filepath) : title,
-            Author = string.IsNullOrEmpty(author) ? "Unknown" : author
-        };
-        LogBookData(finalizedResult.Title, finalizedResult.Author);
-        return finalizedResult;
+            Console.WriteLine("No title found");
+            string filename = Path.GetFileName(filepath);
+            title = filename;
+        }
+
+        if (string.IsNullOrEmpty(author))
+        {
+            Console.WriteLine("No author found");
+            author = "No author found";
+        }
+
+        return new BookInfo { Title = title, Author = author };
+    }
+
+    private void LogBookData(string title, string author)
+    {
+        // Implement your logging logic here
+        Console.WriteLine($"Logging Book Data - Title: {title}, Author: {author}");
     }
 }
