@@ -53,7 +53,7 @@ namespace SmartLib {
                 return;
             }
             _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/SmartLib;V1.0.0.0;component/src/app/mainwindow.xaml", System.UriKind.Relative);
+            System.Uri resourceLocater = new System.Uri("/SmartLib;component/src/app/mainwindow.xaml", System.UriKind.Relative);
             
             #line 1 "..\..\..\..\..\src\App\MainWindow.xaml"
             System.Windows.Application.LoadComponent(this, resourceLocater);

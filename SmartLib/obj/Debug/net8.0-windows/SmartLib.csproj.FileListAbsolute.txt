@@ -18,8 +18,6 @@ C:\Users\kyshc\Work\Programming\SmartLibC#\SmartLib\obj\Debug\net8.0-windows\ref
 C:\Users\kyshc\Work\Programming\SmartLibC#\SmartLib\obj\Debug\net8.0-windows\SmartLib.pdb
 C:\Users\kyshc\Work\Programming\SmartLibC#\SmartLib\obj\Debug\net8.0-windows\SmartLib.genruntimeconfig.cache
 C:\Users\kyshc\Work\Programming\SmartLibC#\SmartLib\obj\Debug\net8.0-windows\ref\SmartLib.dll
-C:\Users\kyshc\Work\Programming\SmartLibCS\SmartLib\obj\Debug\net8.0-windows\MainWindow.g.cs
-C:\Users\kyshc\Work\Programming\SmartLibCS\SmartLib\obj\Debug\net8.0-windows\App.g.cs
 C:\Users\kyshc\Work\Programming\SmartLibCS\SmartLib\obj\Debug\net8.0-windows\SmartLib_MarkupCompile.cache
 C:\Users\kyshc\Work\Programming\SmartLibCS\SmartLib\obj\Debug\net8.0-windows\SmartLib_MarkupCompile.lref
 C:\Users\kyshc\Work\Programming\SmartLibCS\SmartLib\obj\Debug\net8.0-windows\SmartLib.dll
@@ -53,7 +51,6 @@ C:\Users\kyshc\Work\Programming\SmartLibCS\SmartLib\bin\Debug\net8.0-windows\run
 C:\Users\kyshc\Work\Programming\SmartLibCS\SmartLib\bin\Debug\net8.0-windows\runtimes\unix\lib\netcoreapp2.1\System.Data.SqlClient.dll
 C:\Users\kyshc\Work\Programming\SmartLibCS\SmartLib\bin\Debug\net8.0-windows\runtimes\win\lib\netcoreapp2.1\System.Data.SqlClient.dll
 C:\Users\kyshc\Work\Programming\SmartLibCS\SmartLib\obj\Debug\net8.0-windows\SmartLib.csproj.AssemblyReference.cache
-C:\Users\kyshc\Work\Programming\SmartLibCS\SmartLib\obj\Debug\net8.0-windows\MainWindow.baml
 C:\Users\kyshc\Work\Programming\SmartLibCS\SmartLib\obj\Debug\net8.0-windows\SmartLib.g.resources
 C:\Users\kyshc\Work\Programming\SmartLibCS\SmartLib\obj\Debug\net8.0-windows\SmartLib.GeneratedMSBuildEditorConfig.editorconfig
 C:\Users\kyshc\Work\Programming\SmartLibCS\SmartLib\obj\Debug\net8.0-windows\SmartLib.AssemblyInfoInputs.cache
@@ -63,3 +60,7 @@ C:\Users\kyshc\Work\Programming\SmartLibCS\SmartLib\obj\Debug\net8.0-windows\Sma
 C:\Users\kyshc\Work\Programming\SmartLibCS\SmartLib\obj\Debug\net8.0-windows\SmartLib.csproj.CopyComplete
 C:\Users\kyshc\Work\Programming\SmartLibCS\SmartLib\obj\Debug\net8.0-windows\SmartLib.genruntimeconfig.cache
 C:\Users\kyshc\Work\Programming\SmartLibCS\SmartLib\obj\Debug\net8.0-windows\ref\SmartLib.dll
+C:\Users\kyshc\Work\Programming\SmartLibCS\SmartLib\obj\Debug\net8.0-windows\src\App\App.g.cs
+C:\Users\kyshc\Work\Programming\SmartLibCS\SmartLib\obj\Debug\net8.0-windows\src\App\MainWindow.g.cs
+C:\Users\kyshc\Work\Programming\SmartLibCS\SmartLib\obj\Debug\net8.0-windows\src\App\App.baml
+C:\Users\kyshc\Work\Programming\SmartLibCS\SmartLib\obj\Debug\net8.0-windows\src\App\MainWindow.baml
