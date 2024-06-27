@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
+using System.IO;
 
 public class DatabaseHandler
 {
@@ -16,6 +17,13 @@ public class DatabaseHandler
 
     private SQLiteConnection CreateConnection()
     {
+        bool dbExists = File.Exists(_dbPath);
+
+        if (dbExists)
+        {
+            File.Delete(_dbPath); // Delete existing database file
+        }
+
         try
         {
             var conn = new SQLiteConnection($"Data Source={_dbPath};Version=3;");
@@ -39,7 +47,8 @@ public class DatabaseHandler
                     CREATE TABLE IF NOT EXISTS books (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
                         title TEXT NOT NULL,
-                        author TEXT NOT NULL
+                        author TEXT NOT NULL,
+                        UNIQUE(title, author)
                     )";
                 cmd.ExecuteNonQuery();
             }
@@ -56,10 +65,21 @@ public class DatabaseHandler
         {
             using (var cmd = new SQLiteCommand(_connection))
             {
-                cmd.CommandText = "INSERT INTO books (title, author) VALUES (@title, @author)";
+                cmd.CommandText = @"
+                    INSERT OR IGNORE INTO books (title, author)
+                    VALUES (@title, @author)";
                 cmd.Parameters.AddWithValue("@title", title);
                 cmd.Parameters.AddWithValue("@author", author);
-                cmd.ExecuteNonQuery();
+                int rowsAffected = cmd.ExecuteNonQuery();
+
+                if (rowsAffected == 0)
+                {
+                    Console.WriteLine($"Book '{title}' by '{author}' already exists in the database.");
+                }
+                else
+                {
+                    Console.WriteLine($"Book '{title}' by '{author}' added to the database.");
+                }
             }
         }
         catch (SQLiteException e)
@@ -99,9 +119,6 @@ public class DatabaseHandler
 
     public void CloseConnection()
     {
-        if (_connection != null)
-        {
-            _connection.Close();
-        }
+        _connection?.Close();
     }
 }

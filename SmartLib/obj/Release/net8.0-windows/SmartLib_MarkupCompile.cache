@@ -10,11 +10,11 @@ none
 false
 TRACE;RELEASE;NET;NET8_0;NETCOREAPP
 
-2-1229904646
+2152915935
 
-16540718452
+16578416751
 211244907667
-App\App.xaml;App\MainWindow.xaml;
+src\App\App.xaml;src\App\MainWindow.xaml;
 
 True
 

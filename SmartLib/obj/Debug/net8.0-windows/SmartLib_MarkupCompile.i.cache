@@ -10,11 +10,11 @@ none
 false
 TRACE;DEBUG;NET;NET8_0;NETCOREAPP
 
-2-1229904646
+2152915935
 
-18-1435297161
+18-1397598862
 211244907667
-App\App.xaml;App\MainWindow.xaml;
+src\App\App.xaml;src\App\MainWindow.xaml;
 
 False
 

@@ -1,7 +1,8 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\SmartLib"
   ],
-  "SelectedNode": "\\SmartLib.sln",
+  "SelectedNode": "\\SmartLib\\SmartLib.sln",
   "PreviewInSolutionExplorer": false
 }
