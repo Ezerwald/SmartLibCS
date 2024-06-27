@@ -18,24 +18,25 @@ public class BookInfoExtractor
         // Try extracting from metadata first
         var metadataResult = await AttemptExtraction(MetadataExtractor.ExtractBookInfo, filepath, "Metadata");
 
-        string title = metadataResult.Title;
-        string author = metadataResult.Author;
+        // Check if we have a valid title and author
+        string title = metadataResult?.Title;
+        string author = metadataResult?.Author;
 
         // If not found or incomplete, try fetching from online databases
         if (string.IsNullOrEmpty(title) || string.IsNullOrEmpty(author))
         {
             string query = !string.IsNullOrEmpty(title) ? title : filename;
             var onlineResult = await AttemptExtraction(bookInfoFetcher.GetBookInfoFromOnlineDatabases, query, "Online Databases");
-            title = onlineResult.Title;
-            author = onlineResult.Author;
+            title = onlineResult?.Title;
+            author = onlineResult?.Author;
         }
 
         // If still not found or incomplete, try extracting from filename
         if (string.IsNullOrEmpty(title) || string.IsNullOrEmpty(author))
         {
             var filenameResult = FilenameExtractor.ExtractBookInfo(filename);
-            title = filenameResult.Title;
-            author = filenameResult.Author;
+            title = filenameResult?.Title;
+            author = filenameResult?.Author;
         }
 
         // Finalize book info ensuring no empty values are returned
@@ -51,8 +52,15 @@ public class BookInfoExtractor
         try
         {
             var result = await extractionMethod(inputData);
-            LogBookData(result.Title, result.Author);
-            Console.WriteLine($"Extraction method '{methodName}' returned Title: {result.Title}, Author: {result.Author}");
+            if (result != null)
+            {
+                LogBookData(result.Title, result.Author);
+                Console.WriteLine($"Extraction method '{methodName}' returned Title: {result.Title}, Author: {result.Author}");
+            }
+            else
+            {
+                Console.WriteLine($"Extraction method '{methodName}' returned no data.");
+            }           
             return result;
         }
         catch (Exception e)
