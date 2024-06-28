@@ -5,35 +5,39 @@ using System.IO;
 
 public class DatabaseHandler
 {
-    private readonly string _dbPath;
-    private SQLiteConnection _connection;
+    private readonly string _dbPath;           // Path to the SQLite database file
+    private SQLiteConnection _connection;      // SQLite connection object
 
     public DatabaseHandler(string dbPath)
     {
         _dbPath = dbPath;
-        _connection = CreateConnection();
-        CreateTable();
+        InitializeDatabase();   // Initialize the database connection
     }
 
-    private SQLiteConnection CreateConnection()
+    private void InitializeDatabase()
     {
-        bool dbExists = File.Exists(_dbPath);
-
-        if (dbExists)
-        {
-            File.Delete(_dbPath); // Delete existing database file
-        }
+        bool dbExists = File.Exists(_dbPath);   // Check if the database file exists
 
         try
         {
-            var conn = new SQLiteConnection($"Data Source={_dbPath};Version=3;");
-            conn.Open();
-            return conn;
+            _connection = new SQLiteConnection($"Data Source={_dbPath};Version=3;");
+
+            if (!dbExists)
+            {
+                _connection.Open();       // Open a new SQLite connection if the database doesn't exist
+                CreateTable();           // Create the 'books' table if it doesn't exist
+                Console.WriteLine("New database was created and connection was opened");
+            }
+            else
+            {
+                _connection.Open();       // Open existing database connection
+                Console.WriteLine("Existing databse connection was opened");
+            }
         }
         catch (SQLiteException e)
         {
-            Console.WriteLine($"Error connecting to database: {e.Message}");
-            return null;
+            Console.WriteLine($"Error initializing database: {e.Message}");
+            _connection = null;   // Set connection to null if initialization fails
         }
     }
 
@@ -43,6 +47,7 @@ public class DatabaseHandler
         {
             using (var cmd = new SQLiteCommand(_connection))
             {
+                // SQL command to create 'books' table if it doesn't exist
                 cmd.CommandText = @"
                     CREATE TABLE IF NOT EXISTS books (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -50,7 +55,7 @@ public class DatabaseHandler
                         author TEXT NOT NULL,
                         UNIQUE(title, author)
                     )";
-                cmd.ExecuteNonQuery();
+                cmd.ExecuteNonQuery();   // Execute the SQL command to create the table
             }
         }
         catch (SQLiteException e)
@@ -61,16 +66,26 @@ public class DatabaseHandler
 
     public void AddBook(string title, string author)
     {
+        if (_connection == null)
+        {
+            Console.WriteLine("Database connection is not initialized.");
+            return;
+        }
+
         try
         {
             using (var cmd = new SQLiteCommand(_connection))
             {
+                // SQL command to insert a new book into the 'books' table
                 cmd.CommandText = @"
                     INSERT OR IGNORE INTO books (title, author)
                     VALUES (@title, @author)";
+
+                // Parameters for the SQL command to prevent SQL injection
                 cmd.Parameters.AddWithValue("@title", title);
                 cmd.Parameters.AddWithValue("@author", author);
-                int rowsAffected = cmd.ExecuteNonQuery();
+
+                int rowsAffected = cmd.ExecuteNonQuery();   // Execute the SQL command and get rows affected
 
                 if (rowsAffected == 0)
                 {
@@ -92,6 +107,12 @@ public class DatabaseHandler
     {
         var books = new List<Tuple<int, string, string>>();
 
+        if (_connection == null)
+        {
+            Console.WriteLine("Database connection is not initialized.");
+            return books;
+        }
+
         try
         {
             using (var cmd = new SQLiteCommand("SELECT id, title, author FROM books", _connection))
@@ -100,10 +121,11 @@ public class DatabaseHandler
                 {
                     while (reader.Read())
                     {
+                        // Retrieve book information from the database
                         books.Add(new Tuple<int, string, string>(
-                            reader.GetInt32(0),
-                            reader.GetString(1),
-                            reader.GetString(2)
+                            reader.GetInt32(0),     // ID of the book
+                            reader.GetString(1),    // Title of the book
+                            reader.GetString(2)     // Author of the book
                         ));
                     }
                 }
@@ -119,6 +141,10 @@ public class DatabaseHandler
 
     public void CloseConnection()
     {
-        _connection?.Close();
+        if (_connection != null)
+        {
+            _connection.Close();      // Close the SQLite connection
+            _connection.Dispose();    // Dispose of the connection object
+        }
     }
 }
