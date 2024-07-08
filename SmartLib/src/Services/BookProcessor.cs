@@ -4,6 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using HeyRed.Mime;
+using SmartLib.src.Data;
+using SmartLib.src.Services.BookInfoExtractor;
+using SmartLib.src.Services.BookInfoExtractor.BookInfoFetcher;
 public class BookProcessor
 {
     /// <summary>
