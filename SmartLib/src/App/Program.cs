@@ -1,7 +1,9 @@
 ﻿using System;
 using System.IO;
-using System.Data.SQLite;
 using System.Threading.Tasks;
+using System.Data.SQLite;
+using SmartLib.src.Services;
+using SmartLib.src.Data;
 
 namespace SmartLib.src.App
 {
@@ -11,26 +13,28 @@ namespace SmartLib.src.App
         {
             try
             {
-                // Path to folder with books to process
-                var folderPath = "C:/Users/kyshc/Books";
-
-                // Base directory where the application is running
-                var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                // Get folder path from input
+                var folderPath = GetFolderPathFromInput();
+                if (string.IsNullOrEmpty(folderPath) || !Directory.Exists(folderPath))
+                {
+                    Console.WriteLine("Invalid folder path. Please ensure the path exists.");
+                    return;
+                }
 
                 // Path to the SQLite database file
-                var dbFilePath = Path.Combine(baseDir, "data", "library.db");
+                var dataBasePath = GetDataBasePath();
 
-                //// Ensure the data directory exists
-                EnsureDataDirectoryExists(Path.GetDirectoryName(dbFilePath));
+                // Ensure the data directory exists
+                EnsureDataDirectoryExists(Path.GetDirectoryName(dataBasePath));
 
-                //// Check if database file exists, if not create it
-                EnsureDatabaseFileExists(dbFilePath);
+                // Check if database file exists, if not create it
+                await EnsureDatabaseFileExistsAsync(dataBasePath);
 
-                //// Process the books
-                await ProcessBooksAsync(folderPath, dbFilePath);
+                // Process the books
+                await ProcessBooksAsync(folderPath, dataBasePath);
 
-                //// Display the books
-                ShowAllBooks(dbFilePath);
+                // Display the books
+                DisplayAllBooks(dataBasePath);
             }
             catch (Exception ex)
             {
@@ -42,8 +46,39 @@ namespace SmartLib.src.App
                 Console.ReadLine(); // Wait for the user to press Enter before closing
             }
         }
+
+        private static string GetFolderPathFromInput()
+        {
+            try
+            {
+                Console.WriteLine("Please specify the path to your books folder:");
+                return Console.ReadLine();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while reading the folder path: {ex.Message}");
+                return null;
+            }
+        }
+
+        private static string GetDataBasePath(string dataBasePath = null)
+        {
+            // Base directory where the application is running
+            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+            if (baseDir == null)
+            {
+                dataBasePath = Path.Combine(baseDir, "data", "library.db");
+            }
+            return dataBasePath;
+        }
+
         private static void EnsureDataDirectoryExists(string directoryPath)
         {
+            if (directoryPath == null)
+            {
+                throw new ArgumentNullException(nameof(directoryPath));
+            }
+
             if (!Directory.Exists(directoryPath))
             {
                 Directory.CreateDirectory(directoryPath);
@@ -55,14 +90,19 @@ namespace SmartLib.src.App
             }
         }
 
-        private static void EnsureDatabaseFileExists(string dbFilePath)
+        private static async Task EnsureDatabaseFileExistsAsync(string dbFilePath)
         {
+            if (dbFilePath == null)
+            {
+                throw new ArgumentNullException(nameof(dbFilePath));
+            }
+
             if (!File.Exists(dbFilePath))
             {
                 // Create SQLite database file
                 using (var connection = new SQLiteConnection($"Data Source={dbFilePath};Version=3;"))
                 {
-                    connection.Open();
+                    await connection.OpenAsync();
                     connection.Close();
                 }
                 Console.WriteLine($"Created SQLite database file: {dbFilePath}");
@@ -75,14 +115,24 @@ namespace SmartLib.src.App
 
         private static async Task ProcessBooksAsync(string folderPath, string dbFilePath)
         {
-            var processor = new BookProcessor(folderPath, dbFilePath);
-            await processor.ProcessBooksAsync();
+            if (string.IsNullOrEmpty(folderPath) || string.IsNullOrEmpty(dbFilePath))
+            {
+                throw new ArgumentException("Folder path and database file path cannot be null or empty.");
+            }
+
+            var bookProcessor = new BookProcessor(folderPath, dbFilePath);
+            await bookProcessor.ProcessBooksAsync();
         }
 
-        private static void ShowAllBooks(string dbFilePath)
+        private static void DisplayAllBooks(string dbFilePath)
         {
-            var viewer = new DatabaseViewer(dbFilePath);
-            viewer.ShowAllBooks();
+            if (string.IsNullOrEmpty(dbFilePath))
+            {
+                throw new ArgumentException("Database file path cannot be null or empty.");
+            }
+
+            var databaseViewer = new DatabaseViewer(dbFilePath);
+            databaseViewer.ShowAllBooks();
         }
     }
 }
