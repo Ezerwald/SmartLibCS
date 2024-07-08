@@ -1,4 +1,4 @@
-﻿namespace SmartLib.src.Services.BookInfoExtractor.BookInfoFetcher
+﻿namespace SmartLib.src.Services.Fetchers
 {
     public interface IBookInfoFetcher
     {

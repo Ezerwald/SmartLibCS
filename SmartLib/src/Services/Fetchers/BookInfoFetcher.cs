@@ -1,7 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-
-namespace SmartLib.src.Services.BookInfoExtractor.BookInfoFetcher
+﻿namespace SmartLib.src.Services.Fetchers
 {
     public class BookInfoFetcher : IBookInfoFetcher
     {

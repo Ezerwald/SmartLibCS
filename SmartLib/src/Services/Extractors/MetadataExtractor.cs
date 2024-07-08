@@ -1,9 +1,6 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using UglyToad.PdfPig;
+﻿using UglyToad.PdfPig;
 
-namespace SmartLib.src.Services.BookInfoExtractor
+namespace SmartLib.src.Services.Extractors
 {
     public class MetadataExtractor
     {

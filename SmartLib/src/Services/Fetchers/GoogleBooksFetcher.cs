@@ -1,9 +1,7 @@
-﻿using System;
-using System.Net.Http;
+﻿using System.Net.Http;
 using System.Text.Json;
-using System.Threading.Tasks;
 
-namespace SmartLib.src.Services.BookInfoExtractor.BookInfoFetcher
+namespace SmartLib.src.Services.Fetchers
 {
     public class GoogleBooksFetcher
     {

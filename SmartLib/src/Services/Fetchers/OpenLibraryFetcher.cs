@@ -1,7 +1,7 @@
 ﻿using System.Net.Http;
 using System.Text.Json;
 
-namespace SmartLib.src.Services.BookInfoExtractor.BookInfoFetcher
+namespace SmartLib.src.Services.Fetchers
 {
     public class OpenLibraryFetcher
     {
