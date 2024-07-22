@@ -1,138 +1,67 @@
-﻿using System;
-using System.IO;
-using System.Threading.Tasks;
-using System.Data.SQLite;
+﻿using System.IO;
 using SmartLib.src.Services;
 using SmartLib.src.Data;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using SmartLib.src.Domain.Interfaces;
 
 namespace SmartLib.src.App
 {
     internal class Program
     {
+        private static readonly ServiceProvider ServiceProvider = ConfigureServices();
+
         public static async Task Main(string[] args)
         {
+            var logger = ServiceProvider.GetService<ILogger<Program>>();
+
             try
             {
-                // Get folder path from input
-                var folderPath = GetFolderPathFromInput();
+                var folderPathService = ServiceProvider.GetService<IFolderPathService>();
+                var databasePathService = ServiceProvider.GetService<IDatabasePathService>();
+                var bookProcessor = ServiceProvider.GetService<IBookProcessor>();
+                var databaseViewer = ServiceProvider.GetService<IDatabaseViewer>();
+
+                var folderPath = folderPathService.GetFolderPathFromInput();
                 if (string.IsNullOrEmpty(folderPath) || !Directory.Exists(folderPath))
                 {
-                    Console.WriteLine("Invalid folder path. Please ensure the path exists.");
+                    logger.LogError("Invalid folder path. Please ensure the path exists.");
                     return;
                 }
 
-                // Path to the SQLite database file
-                var dataBasePath = GetDataBasePath();
+                var dataBasePath = databasePathService.GetDataBasePath();
+                if (dataBasePath != null)
+                {
+                    await databasePathService.EnsureDatabaseFileExistsAsync(dataBasePath);
 
-                // Ensure the data directory exists
-                EnsureDataDirectoryExists(Path.GetDirectoryName(dataBasePath));
-
-                // Check if database file exists, if not create it
-                await EnsureDatabaseFileExistsAsync(dataBasePath);
-
-                // Process the books
-                await ProcessBooksAsync(folderPath, dataBasePath);
-
-                // Display the books
-                DisplayAllBooks(dataBasePath);
+                    await bookProcessor.ProcessAllBooksAsync();
+                    databaseViewer.DisplayAllBooks(dataBasePath);
+                }
+                else
+                {
+                    logger.LogError("Invalid database file path.");
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"An error occurred: {ex.Message}");
+                logger.LogError($"An error occurred: {ex.Message}");
             }
             finally
             {
-                Console.WriteLine("Press Enter to exit.");
-                Console.ReadLine(); // Wait for the user to press Enter before closing
+                logger.LogInformation("Press Enter to exit.");
+                Console.ReadLine();
             }
         }
 
-        private static string GetFolderPathFromInput()
+        private static ServiceProvider ConfigureServices()
         {
-            try
-            {
-                Console.WriteLine("Please specify the path to your books folder:");
-                return Console.ReadLine();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"An error occurred while reading the folder path: {ex.Message}");
-                return null;
-            }
-        }
-
-        private static string GetDataBasePath(string dataBasePath = null)
-        {
-            // Base directory where the application is running
-            var baseDir = AppDomain.CurrentDomain.BaseDirectory;
-            if (baseDir == null)
-            {
-                dataBasePath = Path.Combine(baseDir, "data", "library.db");
-            }
-            return dataBasePath;
-        }
-
-        private static void EnsureDataDirectoryExists(string directoryPath)
-        {
-            if (directoryPath == null)
-            {
-                throw new ArgumentNullException(nameof(directoryPath));
-            }
-
-            if (!Directory.Exists(directoryPath))
-            {
-                Directory.CreateDirectory(directoryPath);
-                Console.WriteLine($"Created data directory: {directoryPath}");
-            }
-            else
-            {
-                Console.WriteLine($"Data directory already exists: {directoryPath}");
-            }
-        }
-
-        private static async Task EnsureDatabaseFileExistsAsync(string dbFilePath)
-        {
-            if (dbFilePath == null)
-            {
-                throw new ArgumentNullException(nameof(dbFilePath));
-            }
-
-            if (!File.Exists(dbFilePath))
-            {
-                // Create SQLite database file
-                using (var connection = new SQLiteConnection($"Data Source={dbFilePath};Version=3;"))
-                {
-                    await connection.OpenAsync();
-                    connection.Close();
-                }
-                Console.WriteLine($"Created SQLite database file: {dbFilePath}");
-            }
-            else
-            {
-                Console.WriteLine($"SQLite database file already exists: {dbFilePath}");
-            }
-        }
-
-        private static async Task ProcessBooksAsync(string folderPath, string dbFilePath)
-        {
-            if (string.IsNullOrEmpty(folderPath) || string.IsNullOrEmpty(dbFilePath))
-            {
-                throw new ArgumentException("Folder path and database file path cannot be null or empty.");
-            }
-
-            var bookProcessor = new BookProcessor(folderPath, dbFilePath);
-            await bookProcessor.ProcessBooksAsync();
-        }
-
-        private static void DisplayAllBooks(string dbFilePath)
-        {
-            if (string.IsNullOrEmpty(dbFilePath))
-            {
-                throw new ArgumentException("Database file path cannot be null or empty.");
-            }
-
-            var databaseViewer = new DatabaseViewer(dbFilePath);
-            databaseViewer.ShowAllBooks();
+            return new ServiceCollection()
+                .AddLogging(configure => configure.AddConsole())
+                .AddSingleton<IFolderPathService, FolderPathService>()
+                .AddSingleton<IDatabasePathService, DatabasePathService>()
+                .AddSingleton<IBookProcessor, BookProcessor>()
+                .AddSingleton<IDatabaseViewer, DatabaseViewer>()
+                .BuildServiceProvider();
         }
     }
 }

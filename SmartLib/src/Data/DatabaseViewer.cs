@@ -1,6 +1,6 @@
 ﻿namespace SmartLib.src.Data
 {
-    public class DatabaseViewer
+    public class DatabaseViewer : IDatabaseViewer
     {
         private readonly DatabaseHandler _dbHandler;
 
@@ -9,7 +9,7 @@
             _dbHandler = new DatabaseHandler(dbPath);
         }
 
-        public void ShowAllBooks()
+        public void DisplayAllBooks()
         {
             var books = _dbHandler.GetAllBooks();
             if (books.Count == 0)
