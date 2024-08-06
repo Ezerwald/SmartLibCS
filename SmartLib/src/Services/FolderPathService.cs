@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using SmartLib.src.Domain.Interfaces;
 
-namespace SmartLib.src.Services
+public class FolderPathService : IFolderPathService
 {
-    internal class Class1
+    public string GetFolderPathFromInput()
     {
+        Console.WriteLine("Please specify the path to your books folder:");
+        return Console.ReadLine();
     }
 }

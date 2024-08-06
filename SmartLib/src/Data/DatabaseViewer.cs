@@ -1,32 +1,44 @@
-﻿namespace SmartLib.src.Data
+﻿using SmartLib.src.Domain.Interfaces;
+using Microsoft.Extensions.Logging;
+
+namespace SmartLib.src.Data
 {
     public class DatabaseViewer : IDatabaseViewer
     {
-        private readonly DatabaseHandler _dbHandler;
+        private readonly IDatabaseHandler _dbHandler;
+        private readonly ILogger<DatabaseViewer> _logger;
 
-        public DatabaseViewer(string dbPath)
+        public DatabaseViewer(IDatabaseHandler dbHandler, ILogger<DatabaseViewer> logger)
         {
-            _dbHandler = new DatabaseHandler(dbPath);
+            _dbHandler = dbHandler ?? throw new ArgumentNullException(nameof(dbHandler));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public void DisplayAllBooks()
         {
-            var books = _dbHandler.GetAllBooks();
-            if (books.Count == 0)
+            try
             {
-                Console.WriteLine("No books found in the database.");
-                return;
+                var books = _dbHandler.GetAllBooks();
+                if (books.Count == 0)
+                {
+                    Console.WriteLine("No books found in the database.");
+                    return;
+                }
+
+                Console.WriteLine($"{"ID",-5} {"Title",-90} {"Author",-30}");
+                Console.WriteLine(new string('=', 135));
+
+                foreach (var book in books)
+                {
+                    Console.WriteLine($"{book.Item1,-5} {book.Item2,-90} {book.Item3,-30}");
+                }
+
+                    _dbHandler.CloseConnection();
             }
-
-            Console.WriteLine($"{"ID",-5} {"Title",-50} {"Author",-30}");
-            Console.WriteLine(new string('=', 85));
-
-            foreach (var book in books)
+            catch (Exception ex)
             {
-                Console.WriteLine($"{book.Item1,-5} {book.Item2,-50} {book.Item3,-30}");
+                _logger.LogError(ex, "An error occurred while displaying books.");
             }
-
-            _dbHandler.CloseConnection();
         }
     }
 }

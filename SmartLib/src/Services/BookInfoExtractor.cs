@@ -1,16 +1,19 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
+using System.Threading.Tasks;
+using SmartLib.src.Domain.Interfaces;
 using SmartLib.src.Services.Extractors;
 using SmartLib.src.Services.Fetchers;
 
 namespace SmartLib.src.Services
 {
-    public class BookInfoExtractor
+    public class BookInfoExtractor : IBookInfoExtractor
     {
-        private readonly IBookInfoFetcher bookInfoFetcher;
+        private readonly IBookInfoFetcher _bookInfoFetcher;
 
         public BookInfoExtractor(IBookInfoFetcher bookInfoFetcher)
         {
-            this.bookInfoFetcher = bookInfoFetcher;
+            _bookInfoFetcher = bookInfoFetcher;
         }
 
         public async Task<BookInfo> GetBookInfoAsync(string filepath)
@@ -28,7 +31,7 @@ namespace SmartLib.src.Services
             if (string.IsNullOrEmpty(title) || string.IsNullOrEmpty(author))
             {
                 string query = !string.IsNullOrEmpty(title) ? title : filename;
-                var onlineResult = await AttemptExtraction(bookInfoFetcher.GetBookInfoFromOnlineDatabases, query, "Online Databases");
+                var onlineResult = await AttemptExtraction(_bookInfoFetcher.GetBookInfoFromOnlineDatabases, query, "Online Databases");
                 title = onlineResult?.Title;
                 author = onlineResult?.Author;
             }

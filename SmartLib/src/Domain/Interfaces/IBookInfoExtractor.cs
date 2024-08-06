@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace SmartLib.src.Domain.Interfaces
 {
-    internal interface IBookInfoExtractor
+    public interface IBookInfoExtractor
     {
+        Task<BookInfo> GetBookInfoAsync(string filepath);
     }
 }

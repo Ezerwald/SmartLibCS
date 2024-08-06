@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace SmartLib.src.Domain.Interfaces
+﻿namespace SmartLib.src.Domain.Interfaces
 {
-    internal interface Interface1
+    public interface IDatabaseHandler : IDisposable
     {
+        void AddBook(string title, string author);
+        List<Tuple<int, string, string>> GetAllBooks();
+        void CleanDatabase();
+        void CloseConnection();
     }
 }

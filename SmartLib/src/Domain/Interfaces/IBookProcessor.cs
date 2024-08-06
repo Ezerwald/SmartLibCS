@@ -2,6 +2,8 @@
 {
     public interface IBookProcessor
     {
+        string FolderPath { get; set; }
+
         /// <summary>
         /// Processes all digital books in the specified folder and adds their information to the database.
         /// </summary>

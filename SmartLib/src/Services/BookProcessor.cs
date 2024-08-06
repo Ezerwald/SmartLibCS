@@ -2,32 +2,39 @@
 using HeyRed.Mime;
 using Microsoft.Extensions.Logging;
 using SmartLib.src.Domain.Interfaces;
-using SmartLib.src.Services.Fetchers;
+using System.Collections.Generic;
+using System.Linq;
+using System;
+using System.Threading.Tasks;
 
 namespace SmartLib.src.Services
 {
     public class BookProcessor : IBookProcessor
     {
-        private readonly string _folderPath;
         private readonly IDatabaseHandler _dbHandler;
-        private readonly IBookInfoFetcher _bookInfoFetcher;
         private readonly IBookInfoExtractor _bookInfoExtractor;
         private readonly ILogger<BookProcessor> _logger;
 
-        public BookProcessor(string folderPath, IDatabaseHandler dbHandler, IBookInfoFetcher bookInfoFetcher, IBookInfoExtractor bookInfoExtractor, ILogger<BookProcessor> logger)
+        public string FolderPath { get; set; }   // FolderPath is now a property
+
+        public BookProcessor(IDatabaseHandler dbHandler, IBookInfoExtractor bookInfoExtractor, ILogger<BookProcessor> logger)
         {
-            _folderPath = folderPath ?? throw new ArgumentNullException(nameof(folderPath));
             _dbHandler = dbHandler ?? throw new ArgumentNullException(nameof(dbHandler));
-            _bookInfoFetcher = bookInfoFetcher ?? throw new ArgumentNullException(nameof(bookInfoFetcher));
             _bookInfoExtractor = bookInfoExtractor ?? throw new ArgumentNullException(nameof(bookInfoExtractor));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public async Task ProcessAllBooksAsync()
         {
+            if (string.IsNullOrEmpty(FolderPath) || !Directory.Exists(FolderPath))
+            {
+                _logger.LogError("Invalid or empty folder path.");
+                return;
+            }
+
             try
             {
-                var files = GetAllBookFiles(_folderPath);
+                var files = GetAllBookFiles(FolderPath);
                 foreach (var filepath in files)
                 {
                     await ProcessBookAsync(filepath);
@@ -39,6 +46,7 @@ namespace SmartLib.src.Services
             }
             finally
             {
+                _logger.LogInformation("All books have been processed.");
                 _dbHandler.CloseConnection();
             }
         }
@@ -83,11 +91,6 @@ namespace SmartLib.src.Services
             {
                 _logger.LogError(ex, $"Error processing digital book '{filepath}'");
             }
-        }
-
-        public Task ProcessAllBooksAsync()
-        {
-            throw new NotImplementedException();
         }
     }
 }

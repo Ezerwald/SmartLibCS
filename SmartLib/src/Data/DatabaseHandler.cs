@@ -1,43 +1,58 @@
-﻿using System.Data.SQLite;
+﻿using SmartLib.src.Domain.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.Data.SQLite;
 using System.IO;
+using Microsoft.Extensions.Logging;
 
 namespace SmartLib.src.Data
 {
-    public class DatabaseHandler
+    public class DatabaseHandler : IDatabaseHandler, IDisposable
     {
-        private readonly string _dbPath;           // Path to the SQLite database file
-        private SQLiteConnection _connection;      // SQLite connection object
+        private readonly string _dbPath;
+        private SQLiteConnection _connection;
+        private readonly ILogger<DatabaseHandler> _logger;
+        private bool _disposed = false;
 
-        public DatabaseHandler(string dbPath)
+        public DatabaseHandler(IDatabasePathService databasePathService, ILogger<DatabaseHandler> logger)
         {
-            _dbPath = dbPath;
-            InitializeDatabase();   // Initialize the database connection
+            _dbPath = databasePathService.GetDataBasePath();
+            _logger = logger;
+            InitializeDatabase();
         }
 
         private void InitializeDatabase()
         {
-            bool dbExists = File.Exists(_dbPath);   // Check if the database file exists
+            bool dbExists = File.Exists(_dbPath);
 
             try
             {
+                _logger.LogInformation($"Attempting to open database at path: {_dbPath}");
                 _connection = new SQLiteConnection($"Data Source={_dbPath};Version=3;");
+                _connection.Open();
 
                 if (!dbExists)
                 {
-                    _connection.Open();       // Open a new SQLite connection if the database doesn't exist
-                    CreateTable();           // Create the 'books' table if it doesn't exist
-                    Console.WriteLine("New database was created and connection was opened");
+                    CreateTable();
+                    _logger.LogInformation("New database was created and connection was opened");
                 }
                 else
                 {
-                    _connection.Open();       // Open existing database connection
-                    Console.WriteLine("Existing databse connection was opened");
+                    _logger.LogInformation("Existing database connection was opened");
                 }
             }
             catch (SQLiteException e)
             {
-                Console.WriteLine($"Error initializing database: {e.Message}");
-                _connection = null;   // Set connection to null if initialization fails
+                _logger.LogError(e, "Error initializing database.");
+                _connection = null;
+            }
+        }
+
+        private void EnsureConnectionIsOpen()
+        {
+            if (_connection == null || _connection.State != System.Data.ConnectionState.Open)
+            {
+                InitializeDatabase();
             }
         }
 
@@ -47,7 +62,6 @@ namespace SmartLib.src.Data
             {
                 using (var cmd = new SQLiteCommand(_connection))
                 {
-                    // SQL command to create 'books' table if it doesn't exist
                     cmd.CommandText = @"
                     CREATE TABLE IF NOT EXISTS books (
                         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -55,20 +69,23 @@ namespace SmartLib.src.Data
                         author TEXT NOT NULL,
                         UNIQUE(title, author)
                     )";
-                    cmd.ExecuteNonQuery();   // Execute the SQL command to create the table
+                    cmd.ExecuteNonQuery();
                 }
             }
             catch (SQLiteException e)
             {
-                Console.WriteLine($"Error creating table: {e.Message}");
+                _logger.LogError(e, "Error creating table.");
             }
         }
 
         public void AddBook(string title, string author)
         {
+            EnsureConnectionIsOpen();
+
+            _logger.LogInformation("Adding new book to the database...");
             if (_connection == null)
             {
-                Console.WriteLine("Database connection is not initialized.");
+                _logger.LogWarning("Database connection is not initialized");
                 return;
             }
 
@@ -76,40 +93,39 @@ namespace SmartLib.src.Data
             {
                 using (var cmd = new SQLiteCommand(_connection))
                 {
-                    // SQL command to insert a new book into the 'books' table
                     cmd.CommandText = @"
                     INSERT OR IGNORE INTO books (title, author)
                     VALUES (@title, @author)";
-
-                    // Parameters for the SQL command to prevent SQL injection
                     cmd.Parameters.AddWithValue("@title", title);
                     cmd.Parameters.AddWithValue("@author", author);
-
-                    int rowsAffected = cmd.ExecuteNonQuery();   // Execute the SQL command and get rows affected
+                    int rowsAffected = cmd.ExecuteNonQuery();
 
                     if (rowsAffected == 0)
                     {
-                        Console.WriteLine($"Book '{title}' by '{author}' already exists in the database.");
+                        _logger.LogInformation($"Book '{title}' by '{author}' already exists in the database.");
                     }
                     else
                     {
-                        Console.WriteLine($"Book '{title}' by '{author}' added to the database.");
+                        _logger.LogInformation($"Book '{title}' by '{author}' added to the database.");
                     }
                 }
             }
             catch (SQLiteException e)
             {
-                Console.WriteLine($"Error adding book to database: {e.Message}");
+                _logger.LogError(e, "Error adding book to database.");
             }
         }
 
         public List<Tuple<int, string, string>> GetAllBooks()
         {
+            EnsureConnectionIsOpen();
+
+            _logger.LogInformation("Getting all books...");
             var books = new List<Tuple<int, string, string>>();
 
             if (_connection == null)
             {
-                Console.WriteLine("Database connection is not initialized.");
+                _logger.LogWarning("Database connection is not initialized.");
                 return books;
             }
 
@@ -121,11 +137,10 @@ namespace SmartLib.src.Data
                     {
                         while (reader.Read())
                         {
-                            // Retrieve book information from the database
                             books.Add(new Tuple<int, string, string>(
-                                reader.GetInt32(0),     // ID of the book
-                                reader.GetString(1),    // Title of the book
-                                reader.GetString(2)     // Author of the book
+                                reader.GetInt32(0),
+                                reader.GetString(1),
+                                reader.GetString(2)
                             ));
                         }
                     }
@@ -133,19 +148,80 @@ namespace SmartLib.src.Data
             }
             catch (SQLiteException e)
             {
-                Console.WriteLine($"Error retrieving books from database: {e.Message}");
+                _logger.LogError(e, "Error retrieving books from database.");
             }
 
             return books;
+        }
+
+        public void CleanDatabase()
+        {
+            EnsureConnectionIsOpen();
+
+            if (_connection == null)
+            {
+                _logger.LogWarning("Database connection is not initialized.");
+                return;
+            }
+
+            try
+            {
+                using (var cmd = new SQLiteCommand(_connection))
+                {
+                    // Drop the existing table
+                    cmd.CommandText = "DROP TABLE IF EXISTS books";
+                    cmd.ExecuteNonQuery();
+
+                    _logger.LogInformation("Existing tables have been dropped.");
+
+                    // Recreate the table
+                    CreateTable();
+                    _logger.LogInformation("Database tables have been recreated.");
+                }
+            }
+            catch (SQLiteException e)
+            {
+                _logger.LogError(e, "Error cleaning database.");
+            }
         }
 
         public void CloseConnection()
         {
             if (_connection != null)
             {
-                _connection.Close();      // Close the SQLite connection
-                _connection.Dispose();    // Dispose of the connection object
+                try
+                {
+                    _connection.Close();
+                }
+                catch (SQLiteException e)
+                {
+                    _logger.LogError(e, "Error closing database connection.");
+                }
+                finally
+                {
+                    _connection.Dispose();
+                    _connection = null;
+                }
             }
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed)
+            {
+                if (disposing)
+                {
+                    CloseConnection();
+                }
+                _disposed = true;
+            }
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+            _logger.LogInformation("Database connection was closed and disposed.");
         }
     }
 }
