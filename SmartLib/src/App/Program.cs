@@ -7,7 +7,6 @@ using SmartLib.src.Services;
 using SmartLib.src.Data;
 using SmartLib.src.Domain.Interfaces;
 using SmartLib.src.Services.Fetchers;
-using System.Printing.IndexedProperties;
 
 namespace SmartLib.src.App
 {
@@ -24,32 +23,10 @@ namespace SmartLib.src.App
 
                 try
                 {
-                    var folderPathService = services.GetRequiredService<IFolderPathService>();
-                    var databasePathService = services.GetRequiredService<IDatabasePathService>();
-                    var bookProcessor = services.GetRequiredService<IBookProcessor>();
-                    var databaseViewer = services.GetRequiredService<IDatabaseViewer>();
-                    var databaseHandler = services.GetRequiredService<IDatabaseHandler>();
+                    CleanDatabase(services);
+                    await ProcessBooksAsync(services, logger);
+                    DisplayBooks(services);
 
-                    var folderPath = folderPathService.GetFolderPathFromInput();
-                    if (string.IsNullOrEmpty(folderPath) || !Directory.Exists(folderPath))
-                    {
-                        logger.LogError("Invalid folder path. Please ensure the path exists.");
-                        return;
-                    }
-                    bookProcessor.FolderPath = folderPath;
-
-                    var databasePath = databasePathService.GetDataBasePath();
-                    if (string.IsNullOrEmpty(databasePath))
-                    {
-                        logger.LogError("Invalid database file path.");
-                        return;
-                    }
-
-                    await databasePathService.EnsureDatabaseFileExistsAsync(databasePath);
-
-                    await bookProcessor.ProcessAllBooksAsync();
-                    databaseViewer.DisplayAllBooks();
-//                    databaseHandler.CleanDatabase();
                 }
                 catch (Exception ex)
                 {
@@ -75,6 +52,42 @@ namespace SmartLib.src.App
                 .AddSingleton<IBookInfoExtractor, BookInfoExtractor>()
                 .AddSingleton<IBookInfoFetcher, BookInfoFetcher>()
                 .BuildServiceProvider();
+        }
+
+        private static async Task ProcessBooksAsync(IServiceProvider services, ILogger logger)
+        {
+            var folderPathService = services.GetRequiredService<IFolderPathService>();
+            var databasePathService = services.GetRequiredService<IDatabasePathService>();
+            var bookProcessor = services.GetRequiredService<IBookProcessor>();
+
+            var databasePath = databasePathService.GetDataBasePath();
+            if (string.IsNullOrEmpty(databasePath))
+            {
+                logger.LogError("Invalid database file path.");
+                return;
+            }
+            await databasePathService.EnsureDatabaseFileExistsAsync(databasePath);
+
+            var folderPath = folderPathService.GetFolderPathFromInput();
+            if (string.IsNullOrEmpty(folderPath) || !Directory.Exists(folderPath))
+            {
+                logger.LogError("Invalid folder path. Please ensure the path exists.");
+                return;
+            }
+            bookProcessor.FolderPath = folderPath;
+            await bookProcessor.ProcessAllBooksAsync();
+        }
+
+        private static void DisplayBooks(IServiceProvider services)
+        {
+            var databaseViewer = services.GetRequiredService<IDatabaseViewer>();
+            databaseViewer.DisplayAllBooks();
+        }
+
+        private static void CleanDatabase(IServiceProvider services)
+        {
+            var databaseHandler = services.GetRequiredService<IDatabaseHandler>();
+            databaseHandler.CleanDatabase();
         }
     }
 }

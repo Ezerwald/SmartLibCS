@@ -14,61 +14,66 @@ namespace SmartLib.src.Data
         private readonly ILogger<DatabaseHandler> _logger;
         private bool _disposed = false;
 
+        private const string CreateTableSQL = @"
+            CREATE TABLE IF NOT EXISTS books (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                author TEXT NOT NULL,
+                UNIQUE(title, author)
+            )";
+
         public DatabaseHandler(IDatabasePathService databasePathService, ILogger<DatabaseHandler> logger)
         {
             _dbPath = databasePathService.GetDataBasePath();
             _logger = logger;
-            InitializeDatabase();
-        }
-
-        private void InitializeDatabase()
-        {
-            bool dbExists = File.Exists(_dbPath);
-
-            try
-            {
-                _logger.LogInformation($"Attempting to open database at path: {_dbPath}");
-                _connection = new SQLiteConnection($"Data Source={_dbPath};Version=3;");
-                _connection.Open();
-
-                if (!dbExists)
-                {
-                    CreateTable();
-                    _logger.LogInformation("New database was created and connection was opened");
-                }
-                else
-                {
-                    _logger.LogInformation("Existing database connection was opened");
-                }
-            }
-            catch (SQLiteException e)
-            {
-                _logger.LogError(e, "Error initializing database.");
-                _connection = null;
-            }
+            EnsureConnectionIsOpen();
         }
 
         private void EnsureConnectionIsOpen()
         {
-            if (_connection == null || _connection.State != System.Data.ConnectionState.Open)
+            if (_connection == null)
             {
-                InitializeDatabase();
+                try
+                {
+                    _logger.LogInformation($"Attempting to open database at path: {_dbPath}");
+                    _connection = new SQLiteConnection($"Data Source={_dbPath};Version=3;");
+                    _connection.Open();
+                    _logger.LogInformation("Database connection was opened.");
+                    CreateTableIfNotExists();
+                }
+                catch (SQLiteException e)
+                {
+                    _logger.LogError(e, "Error initializing database.");
+                    _connection = null;
+                }
+            }
+            else if (_connection.State != System.Data.ConnectionState.Open)
+            {
+                try
+                {
+                    _connection.Open();
+                    _logger.LogInformation("Database connection was reopened.");
+                }
+                catch (SQLiteException e)
+                {
+                    _logger.LogError(e, "Error reopening database connection.");
+                    _connection = null;
+                }
             }
         }
 
-        private void CreateTable()
+        private void CreateTableIfNotExists()
         {
+            if (_connection == null)
+            {
+                _logger.LogWarning("Database connection is not initialized.");
+                return;
+            }
+
             try
             {
-                using (var cmd = new SQLiteCommand(_connection))
+                using (var cmd = new SQLiteCommand(CreateTableSQL, _connection))
                 {
-                    cmd.CommandText = @"
-                    CREATE TABLE IF NOT EXISTS books (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        title TEXT NOT NULL,
-                        author TEXT NOT NULL,
-                        UNIQUE(title, author)
-                    )";
                     cmd.ExecuteNonQuery();
                 }
             }
@@ -81,21 +86,15 @@ namespace SmartLib.src.Data
         public void AddBook(string title, string author)
         {
             EnsureConnectionIsOpen();
-
-            _logger.LogInformation("Adding new book to the database...");
-            if (_connection == null)
-            {
-                _logger.LogWarning("Database connection is not initialized");
-                return;
-            }
+            if (_connection == null) return;
 
             try
             {
                 using (var cmd = new SQLiteCommand(_connection))
                 {
                     cmd.CommandText = @"
-                    INSERT OR IGNORE INTO books (title, author)
-                    VALUES (@title, @author)";
+                        INSERT OR IGNORE INTO books (title, author)
+                        VALUES (@title, @author)";
                     cmd.Parameters.AddWithValue("@title", title);
                     cmd.Parameters.AddWithValue("@author", author);
                     int rowsAffected = cmd.ExecuteNonQuery();
@@ -119,15 +118,10 @@ namespace SmartLib.src.Data
         public List<Tuple<int, string, string>> GetAllBooks()
         {
             EnsureConnectionIsOpen();
+            if (_connection == null) return new List<Tuple<int, string, string>>();
 
             _logger.LogInformation("Getting all books...");
             var books = new List<Tuple<int, string, string>>();
-
-            if (_connection == null)
-            {
-                _logger.LogWarning("Database connection is not initialized.");
-                return books;
-            }
 
             try
             {
@@ -157,25 +151,17 @@ namespace SmartLib.src.Data
         public void CleanDatabase()
         {
             EnsureConnectionIsOpen();
-
-            if (_connection == null)
-            {
-                _logger.LogWarning("Database connection is not initialized.");
-                return;
-            }
+            if (_connection == null) return;
 
             try
             {
                 using (var cmd = new SQLiteCommand(_connection))
                 {
-                    // Drop the existing table
                     cmd.CommandText = "DROP TABLE IF EXISTS books";
                     cmd.ExecuteNonQuery();
-
                     _logger.LogInformation("Existing tables have been dropped.");
 
-                    // Recreate the table
-                    CreateTable();
+                    CreateTableIfNotExists();
                     _logger.LogInformation("Database tables have been recreated.");
                 }
             }
